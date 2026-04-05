@@ -25,6 +25,7 @@ function makeAgent(id: string, name: string): Agent {
     pauseReason: null,
     pausedAt: null,
     permissions: { canCreateAgents: false },
+    gitBranch: null,
     lastHeartbeatAt: null,
     metadata: null,
     createdAt: new Date(),

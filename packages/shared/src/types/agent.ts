@@ -78,6 +78,7 @@ export interface Agent {
   pauseReason: PauseReason | null;
   pausedAt: Date | null;
   permissions: AgentPermissions;
+  gitBranch: string | null;
   lastHeartbeatAt: Date | null;
   metadata: Record<string, unknown> | null;
   createdAt: Date;

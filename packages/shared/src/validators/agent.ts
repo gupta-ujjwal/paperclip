@@ -57,6 +57,7 @@ export const createAgentSchema = z.object({
   runtimeConfig: z.record(z.unknown()).optional().default({}),
   budgetMonthlyCents: z.number().int().nonnegative().optional().default(0),
   permissions: agentPermissionsSchema.optional(),
+  gitBranch: z.string().trim().min(1).max(200).optional().nullable(),
   metadata: z.record(z.unknown()).optional().nullable(),
 });
 

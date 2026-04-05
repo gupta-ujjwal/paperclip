@@ -601,3 +601,16 @@ export {
   type SecretsLocalEncryptedConfig,
   type ConfigMeta,
 } from "./config-schema.js";
+
+export {
+  TASK_ROLE_NAMES,
+  getTaskRole,
+  listTaskRoles,
+  listLeafTaskRoles,
+  listHiringTaskRoles,
+  isTaskRoleName,
+  type TaskRoleName,
+  type TaskRoleTool,
+  type TaskRoleConfig,
+  type ModelPreference,
+} from "./roles/index.js";

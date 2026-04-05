@@ -36,6 +36,13 @@ export const companiesApi = {
   updateBranding: (companyId: string, data: UpdateCompanyBranding) =>
     api.patch<Company>(`/companies/${companyId}/branding`, data),
   archive: (companyId: string) => api.post<Company>(`/companies/${companyId}/archive`, {}),
+  submitTaskReport: (companyId: string, report: string) =>
+    api.post<Company>(`/companies/${companyId}/task-report`, { report }),
+  refreshWorkspace: (companyId: string) =>
+    api.post<{ ok: boolean; durationMs: number; stdout: string; stderr: string; error?: string }>(
+      `/companies/${companyId}/refresh-workspace`,
+      {},
+    ),
   remove: (companyId: string) => api.delete<{ ok: true }>(`/companies/${companyId}`),
   exportBundle: (
     companyId: string,

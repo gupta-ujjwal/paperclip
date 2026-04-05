@@ -107,7 +107,8 @@ export function companyService(db: Db) {
       .leftJoin(companyLogos, eq(companyLogos.companyId, companies.id));
   }
 
-  function deriveIssuePrefixBase(name: string) {
+  function deriveIssuePrefixBase(name: string, isTaskMode: boolean) {
+    if (isTaskMode) return "TSK";
     const normalized = name.toUpperCase().replace(/[^A-Z]/g, "");
     return normalized.slice(0, 3) || ISSUE_PREFIX_FALLBACK;
   }
@@ -131,14 +132,20 @@ export function companyService(db: Db) {
   }
 
   async function createCompanyWithUniquePrefix(data: typeof companies.$inferInsert) {
-    const base = deriveIssuePrefixBase(data.name);
+    const isTaskMode = Boolean(data.workspacePath);
+    const base = deriveIssuePrefixBase(data.name, isTaskMode);
+    // Task-mode companies start the issue counter at -1 so that the first
+    // issue (the onboarding root) is identified as `TSK-0`.
+    const insertData: typeof companies.$inferInsert = isTaskMode
+      ? { ...data, issueCounter: data.issueCounter ?? -1 }
+      : data;
     let suffix = 1;
     while (suffix < 10000) {
       const candidate = `${base}${suffixForAttempt(suffix)}`;
       try {
         const rows = await db
           .insert(companies)
-          .values({ ...data, issuePrefix: candidate })
+          .values({ ...insertData, issuePrefix: candidate })
           .returning();
         return rows[0];
       } catch (error) {

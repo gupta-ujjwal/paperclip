@@ -74,6 +74,32 @@ export function CompanySettings() {
     }
   });
 
+  const refreshWorkspaceMutation = useMutation({
+    mutationFn: () => companiesApi.refreshWorkspace(selectedCompanyId!),
+    onSuccess: (result) => {
+      if (result.ok) {
+        pushToast({
+          tone: "success",
+          title: "Workspace refreshed",
+          body: `Completed in ${result.durationMs}ms`,
+        });
+      } else {
+        pushToast({
+          tone: "error",
+          title: "Refresh failed",
+          body: result.error ?? result.stderr?.slice(0, 200) ?? "Unknown error",
+        });
+      }
+    },
+    onError: (err) => {
+      pushToast({
+        tone: "error",
+        title: "Refresh failed",
+        body: err instanceof Error ? err.message : "Request failed",
+      });
+    },
+  });
+
   const settingsMutation = useMutation({
     mutationFn: (requireApproval: boolean) =>
       companiesApi.update(selectedCompanyId!, {
@@ -392,6 +418,53 @@ export function CompanySettings() {
           )}
         </div>
       )}
+
+      {/* Task Mode */}
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Task Mode
+        </div>
+        <div className="space-y-3 rounded-md border border-border px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="text-sm font-medium">Workspace</div>
+              <p className="text-xs text-muted-foreground">
+                Re-run <code>update-all-repos.sh</code> in the configured workspace path.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refreshWorkspaceMutation.mutate()}
+              disabled={
+                refreshWorkspaceMutation.isPending ||
+                !selectedCompany.workspacePath
+              }
+            >
+              {refreshWorkspaceMutation.isPending ? "Refreshing..." : "Refresh workspace"}
+            </Button>
+          </div>
+          {selectedCompany.taskReport ? (
+            <div className="space-y-2 border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Final PM report</div>
+                {selectedCompany.taskReportSubmittedAt && (
+                  <span className="text-xs text-muted-foreground">
+                    Submitted {new Date(selectedCompany.taskReportSubmittedAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
+              <pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted/30 p-3 text-xs whitespace-pre-wrap font-mono">
+                {selectedCompany.taskReport}
+              </pre>
+            </div>
+          ) : (
+            <div className="border-t border-border pt-3 text-xs text-muted-foreground">
+              No final report submitted yet. The PM agent will post a report when the task is complete.
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Hiring */}
       <div className="space-y-4" data-testid="company-settings-team-section">

@@ -82,7 +82,7 @@ export function Activity() {
   }, [issues]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={History} message="Select a company to view activity." />;
+    return <EmptyState icon={History} message="Select a task to view activity." />;
   }
 
   if (isLoading) {

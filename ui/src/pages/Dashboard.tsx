@@ -175,7 +175,7 @@ export function Dashboard() {
       );
     }
     return (
-      <EmptyState icon={LayoutDashboard} message="Create or select a company to view the dashboard." />
+      <EmptyState icon={LayoutDashboard} message="Create or select a task to view the dashboard." />
     );
   }
 

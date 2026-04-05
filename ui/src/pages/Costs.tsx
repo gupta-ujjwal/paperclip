@@ -529,7 +529,7 @@ export function Costs() {
   }), [budgetPolicies]);
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={DollarSign} message="Select a company to view costs." />;
+    return <EmptyState icon={DollarSign} message="Select a task to view costs." />;
   }
 
   const showCustomPrompt = preset === "custom" && !customReady;
@@ -598,7 +598,7 @@ export function Costs() {
                   ? `${budgetData?.pausedAgentCount ?? 0} agents paused · ${budgetData?.pausedProjectCount ?? 0} projects paused`
                   : spendData?.summary.budgetCents && spendData.summary.budgetCents > 0
                     ? `${formatCents(spendData.summary.spendCents)} of ${formatCents(spendData.summary.budgetCents)}`
-                    : "No monthly cap configured"
+                    : "No total budget cap configured"
               }
               icon={Coins}
             />
@@ -697,7 +697,7 @@ export function Costs() {
                           />
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {spendData.summary.utilizationPercent}% of monthly budget consumed in this range.
+                          {spendData.summary.utilizationPercent}% of total budget consumed in this range.
                         </div>
                       </div>
                     ) : null}
@@ -910,9 +910,9 @@ export function Costs() {
                         <h2 className="text-lg font-semibold capitalize">{scopeType} budgets</h2>
                         <p className="text-sm text-muted-foreground">
                           {scopeType === "company"
-                            ? "Company-wide monthly policy."
+                            ? "Company-wide budget policy."
                             : scopeType === "agent"
-                              ? "Recurring monthly spend policies for individual agents."
+                              ? "Spend policies for individual agents."
                               : "Lifetime spend policies for execution-bound projects."}
                         </p>
                       </div>
@@ -939,7 +939,7 @@ export function Costs() {
                 {budgetPolicies.length === 0 ? (
                   <Card>
                     <CardContent className="px-5 py-8 text-sm text-muted-foreground">
-                      No budget policies yet. Set agent and project budgets from their detail pages, or use the existing company monthly budget control.
+                      No budget policies yet. Set agent and project budgets from their detail pages, or use the existing company budget control.
                     </CardContent>
                   </Card>
                 ) : null}

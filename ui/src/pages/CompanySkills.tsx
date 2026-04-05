@@ -988,7 +988,7 @@ export function CompanySkills() {
   });
 
   if (!selectedCompanyId) {
-    return <EmptyState icon={Boxes} message="Select a company to manage skills." />;
+    return <EmptyState icon={Boxes} message="Select a task to manage skills." />;
   }
 
   function handleAddSkillSource() {

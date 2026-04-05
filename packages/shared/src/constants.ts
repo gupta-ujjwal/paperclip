@@ -50,13 +50,13 @@ export const AGENT_ROLES = [
 export type AgentRole = (typeof AGENT_ROLES)[number];
 
 export const AGENT_ROLE_LABELS: Record<AgentRole, string> = {
-  ceo: "CEO",
+  ceo: "PM",
   cto: "CTO",
   cmo: "CMO",
   cfo: "CFO",
   engineer: "Engineer",
   designer: "Designer",
-  pm: "PM",
+  pm: "Program Manager",
   qa: "QA",
   devops: "DevOps",
   researcher: "Researcher",

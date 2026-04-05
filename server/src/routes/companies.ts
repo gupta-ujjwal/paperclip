@@ -7,6 +7,7 @@ import {
   createCompanySchema,
   updateCompanyBrandingSchema,
   updateCompanySchema,
+  submitTaskReportSchema,
 } from "@paperclipai/shared";
 import { forbidden } from "../errors.js";
 import { validate } from "../middleware/validate.js";
@@ -305,6 +306,31 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     });
     res.json(company);
   });
+
+  // Task-mode: PM submits the final task report for BD review.
+  router.post(
+    "/:companyId/task-report",
+    validate(submitTaskReportSchema),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      assertCompanyAccess(req, companyId);
+      const company = await svc.submitTaskReport(companyId, req.body.report);
+      if (!company) {
+        res.status(404).json({ error: "Task not found" });
+        return;
+      }
+      const actor = getActorInfo(req);
+      await logActivity(db, {
+        companyId,
+        actorType: actor.actorType,
+        actorId: actor.actorId,
+        action: "company.task_report_submitted",
+        entityType: "company",
+        entityId: companyId,
+      });
+      res.json(company);
+    },
+  );
 
   router.post("/:companyId/archive", async (req, res) => {
     assertBoard(req);

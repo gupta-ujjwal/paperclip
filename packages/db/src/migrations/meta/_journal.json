@@ -351,6 +351,13 @@
       "when": 1775412237678,
       "tag": "0049_misty_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1775412436214,
+      "tag": "0050_good_shaman",
+      "breakpoints": true
     }
   ]
 }

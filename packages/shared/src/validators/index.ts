@@ -31,9 +31,11 @@ export {
   createCompanySchema,
   updateCompanySchema,
   updateCompanyBrandingSchema,
+  submitTaskReportSchema,
   type CreateCompany,
   type UpdateCompany,
   type UpdateCompanyBranding,
+  type SubmitTaskReport,
 } from "./company.js";
 export {
   companySkillSourceTypeSchema,

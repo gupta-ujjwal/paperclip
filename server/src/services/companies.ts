@@ -43,6 +43,8 @@ export function companyService(db: Db) {
     spentMonthlyCents: companies.spentMonthlyCents,
     requireBoardApprovalForNewAgents: companies.requireBoardApprovalForNewAgents,
     brandColor: companies.brandColor,
+    taskReport: companies.taskReport,
+    taskReportSubmittedAt: companies.taskReportSubmittedAt,
     logoAssetId: companyLogos.assetId,
     createdAt: companies.createdAt,
     updatedAt: companies.updatedAt,
@@ -234,6 +236,26 @@ export function companyService(db: Db) {
 
         return enrichCompany(hydrated);
       }),
+
+    submitTaskReport: async (id: string, report: string) => {
+      const updated = await db
+        .update(companies)
+        .set({
+          taskReport: report,
+          taskReportSubmittedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(companies.id, id))
+        .returning()
+        .then((rows) => rows[0] ?? null);
+      if (!updated) return null;
+      const row = await getCompanyQuery(db)
+        .where(eq(companies.id, id))
+        .then((rows) => rows[0] ?? null);
+      if (!row) return null;
+      const [hydrated] = await hydrateCompanySpend([row], db);
+      return enrichCompany(hydrated);
+    },
 
     archive: (id: string) =>
       db.transaction(async (tx) => {

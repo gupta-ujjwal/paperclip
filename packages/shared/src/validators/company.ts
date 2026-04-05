@@ -25,6 +25,12 @@ export const updateCompanySchema = createCompanySchema
 
 export type UpdateCompany = z.infer<typeof updateCompanySchema>;
 
+export const submitTaskReportSchema = z.object({
+  report: z.string().trim().min(1).max(65536),
+});
+
+export type SubmitTaskReport = z.infer<typeof submitTaskReportSchema>;
+
 export const updateCompanyBrandingSchema = z
   .object({
     name: z.string().min(1).optional(),

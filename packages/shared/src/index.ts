@@ -603,6 +603,19 @@ export {
 } from "./config-schema.js";
 
 export {
+  TASK_ISSUE_OUTPUT_STATUSES,
+  taskIssueOutputArtifactSchema,
+  taskIssueOutputGitRefSchema,
+  taskIssueOutputTelemetrySchema,
+  taskIssueOutputSchema,
+  type TaskIssueOutputStatus,
+  type TaskIssueOutputArtifact,
+  type TaskIssueOutputGitRef,
+  type TaskIssueOutputTelemetry,
+  type TaskIssueOutput,
+} from "./task-output.js";
+
+export {
   TASK_ROLE_NAMES,
   getTaskRole,
   listTaskRoles,

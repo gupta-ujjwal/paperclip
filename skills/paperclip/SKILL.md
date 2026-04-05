@@ -362,6 +362,83 @@ npx paperclipai issue update <issue-id> --assignee-agent-id <other-agent-id> --s
 
 If you use direct `curl` during these tests, include `X-Paperclip-Run-Id` on all mutating issue requests whenever running inside a heartbeat.
 
+## Task Mode (ephemeral task-teams)
+
+If your company was onboarded as a **Task** (workspace_path set, PM-led team),
+use these endpoints on top of the standard heartbeat flow.
+
+### Ask your manager (escalation)
+
+When a question is outside your scope, escalate upward instead of guessing.
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/task-questions" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "toAgentId": "<manager-agent-id-or-null-for-BD>",
+    "issueId": "<issue-uuid-optional>",
+    "question": "Should the merge strategy be squash or rebase?",
+    "parentQuestionId": null
+  }'
+```
+
+Pass `toAgentId: null` to escalate to the BD (human). If you are forwarding
+an unanswered fragment upward, set `parentQuestionId` to the original
+question's id and restate only the unknown fragment in `question`.
+
+### Answer a subordinate's question
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/task-questions/<question-id>/answer" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "answer": "Use squash merge." }'
+```
+
+Rewrite the answer in the asker's language before passing it back. Never
+fabricate — if you do not know, escalate with your own `task-questions` POST.
+
+### Reject an insufficient answer
+
+If the answer does not resolve your question, reject it with the unanswered
+fragment. The retry counter bumps by one; the 4th rejection is abandoned.
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/task-questions/<question-id>/reject" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "followUp": "Answer covered branch policy but not commit signing." }'
+```
+
+### Submit the final PM report (PM only)
+
+Once every hired agent's issue is resolved, the PM submits the final
+task report. BD reviews it and archives the task.
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/task-report" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "report": "## Summary\n...\n## Artifacts\n...\n## Git refs\n..." }'
+```
+
+Use the TaskIssueOutput shape (summary, status, artifacts, gitRefs,
+findings, telemetry) as the report's structure.
+
+### Refresh the workspace
+
+Re-run `update-all-repos.sh` in the workspace to pull latest on all repos:
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/refresh-workspace" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY"
+```
+
+Returns `{ ok, durationMs, stdout, stderr }`. BD typically presses the
+Refresh Workspace button before handing off a new task, but EM can call
+this at the start of a merge window if upstream moved.
+
 ## Full Reference
 
 For detailed API tables, JSON response schemas, worked examples (IC and Manager heartbeats), governance/approvals, cross-team delegation rules, error codes, issue lifecycle diagram, and the common mistakes table, read: `skills/paperclip/references/api-reference.md`

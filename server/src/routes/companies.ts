@@ -19,6 +19,7 @@ import {
   companyService,
   logActivity,
 } from "../services/index.js";
+import { workspaceRefreshService } from "../services/workspace-refresh.js";
 import type { StorageService } from "../storage/types.js";
 import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
 
@@ -29,6 +30,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
   const portability = companyPortabilityService(db, storage);
   const access = accessService(db);
   const budgets = budgetService(db);
+  const refresh = workspaceRefreshService(db);
 
   async function assertCanUpdateBranding(req: Request, companyId: string) {
     assertCompanyAccess(req, companyId);
@@ -331,6 +333,23 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       res.json(company);
     },
   );
+
+  // Task-mode: run the workspace's update-all-repos.sh to refresh repos.
+  router.post("/:companyId/refresh-workspace", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyAccess(req, companyId);
+    const result = await refresh.refresh(companyId);
+    const actor = getActorInfo(req);
+    await logActivity(db, {
+      companyId,
+      actorType: actor.actorType,
+      actorId: actor.actorId,
+      action: "company.workspace_refreshed",
+      entityType: "company",
+      entityId: companyId,
+    });
+    res.json(result);
+  });
 
   router.post("/:companyId/archive", async (req, res) => {
     assertBoard(req);

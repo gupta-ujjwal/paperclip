@@ -111,6 +111,7 @@ export function OnboardingWizard() {
   // Step 1
   const [companyName, setCompanyName] = useState("");
   const [companyGoal, setCompanyGoal] = useState("");
+  const [workspacePath, setWorkspacePath] = useState("");
 
   // Step 2
   const [agentName, setAgentName] = useState("PM");
@@ -288,6 +289,7 @@ export function OnboardingWizard() {
     setError(null);
     setCompanyName("");
     setCompanyGoal("");
+    setWorkspacePath("");
     setAgentName("PM");
     setAdapterType("claude_local");
     setModel("");
@@ -385,7 +387,10 @@ export function OnboardingWizard() {
     setLoading(true);
     setError(null);
     try {
-      const company = await companiesApi.create({ name: companyName.trim() });
+      const company = await companiesApi.create({
+        name: companyName.trim(),
+        workspacePath: workspacePath.trim() || null,
+      });
       setCreatedCompanyId(company.id);
       setCreatedCompanyPrefix(company.issuePrefix);
       setSelectedCompanyId(company.id);
@@ -604,7 +609,7 @@ export function OnboardingWizard() {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      if (step === 1 && companyName.trim()) handleStep1Next();
+      if (step === 1 && companyName.trim() && workspacePath.trim()) handleStep1Next();
       else if (step === 2 && agentName.trim()) handleStep2Next();
       else if (step === 3 && taskTitle.trim()) handleStep3Next();
       else if (step === 4) handleLaunch();
@@ -705,6 +710,27 @@ export function OnboardingWizard() {
                       onChange={(e) => setCompanyName(e.target.value)}
                       autoFocus
                     />
+                  </div>
+                  <div className="group">
+                    <label
+                      className={cn(
+                        "text-xs mb-1 block transition-colors",
+                        workspacePath.trim()
+                          ? "text-foreground"
+                          : "text-muted-foreground group-focus-within:text-foreground"
+                      )}
+                    >
+                      Workspace path
+                    </label>
+                    <input
+                      className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                      placeholder="/absolute/path/to/your/workspace"
+                      value={workspacePath}
+                      onChange={(e) => setWorkspacePath(e.target.value)}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Should contain CLAUDE.md, architecture.md, dsl.md and your repos.
+                    </p>
                   </div>
                   <div className="group">
                     <label
@@ -1277,7 +1303,7 @@ export function OnboardingWizard() {
                   {step === 1 && (
                     <Button
                       size="sm"
-                      disabled={!companyName.trim() || loading}
+                      disabled={!companyName.trim() || !workspacePath.trim() || loading}
                       onClick={handleStep1Next}
                     >
                       {loading ? (

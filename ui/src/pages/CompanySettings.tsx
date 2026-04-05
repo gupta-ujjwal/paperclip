@@ -35,6 +35,7 @@ export function CompanySettings() {
   // General settings local state
   const [companyName, setCompanyName] = useState("");
   const [description, setDescription] = useState("");
+  const [workspacePath, setWorkspacePath] = useState("");
   const [brandColor, setBrandColor] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export function CompanySettings() {
     if (!selectedCompany) return;
     setCompanyName(selectedCompany.name);
     setDescription(selectedCompany.description ?? "");
+    setWorkspacePath(selectedCompany.workspacePath ?? "");
     setBrandColor(selectedCompany.brandColor ?? "");
     setLogoUrl(selectedCompany.logoUrl ?? "");
   }, [selectedCompany]);
@@ -57,12 +59,14 @@ export function CompanySettings() {
     !!selectedCompany &&
     (companyName !== selectedCompany.name ||
       description !== (selectedCompany.description ?? "") ||
+      workspacePath !== (selectedCompany.workspacePath ?? "") ||
       brandColor !== (selectedCompany.brandColor ?? ""));
 
   const generalMutation = useMutation({
     mutationFn: (data: {
       name: string;
       description: string | null;
+      workspacePath: string | null;
       brandColor: string | null;
     }) => companiesApi.update(selectedCompanyId!, data),
     onSuccess: () => {
@@ -216,6 +220,7 @@ export function CompanySettings() {
     generalMutation.mutate({
       name: companyName.trim(),
       description: description.trim() || null,
+      workspacePath: workspacePath.trim() || null,
       brandColor: brandColor || null
     });
   }
@@ -251,6 +256,18 @@ export function CompanySettings() {
               value={description}
               placeholder="Optional task description"
               onChange={(e) => setDescription(e.target.value)}
+            />
+          </Field>
+          <Field
+            label="Workspace path"
+            hint="Absolute path to the workspace with CLAUDE.md, architecture.md, dsl.md and repos."
+          >
+            <input
+              className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
+              type="text"
+              value={workspacePath}
+              placeholder="/absolute/path/to/your/workspace"
+              onChange={(e) => setWorkspacePath(e.target.value)}
             />
           </Field>
         </div>

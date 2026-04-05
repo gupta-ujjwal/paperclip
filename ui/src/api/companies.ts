@@ -20,6 +20,7 @@ export const companiesApi = {
   create: (data: {
     name: string;
     description?: string | null;
+    workspacePath?: string | null;
     budgetMonthlyCents?: number;
   }) =>
     api.post<Company>("/companies", data),
@@ -28,7 +29,7 @@ export const companiesApi = {
     data: Partial<
       Pick<
         Company,
-        "name" | "description" | "status" | "budgetMonthlyCents" | "requireBoardApprovalForNewAgents" | "brandColor" | "logoAssetId"
+        "name" | "description" | "workspacePath" | "status" | "budgetMonthlyCents" | "requireBoardApprovalForNewAgents" | "brandColor" | "logoAssetId"
       >
     >,
   ) => api.patch<Company>(`/companies/${companyId}`, data),

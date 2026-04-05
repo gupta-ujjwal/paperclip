@@ -4,6 +4,7 @@ export interface Company {
   id: string;
   name: string;
   description: string | null;
+  workspacePath: string | null;
   status: CompanyStatus;
   pauseReason: PauseReason | null;
   pausedAt: Date | null;

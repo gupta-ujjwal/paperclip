@@ -349,6 +349,12 @@ export function OnboardingWizard() {
       env.ANTHROPIC_API_KEY = { type: "plain", value: "" };
       config.env = env;
     }
+    // Task mode: point PM at the workspace so it can read CLAUDE.md,
+    // architecture.md, dsl.md and the repos.
+    const trimmedWorkspace = workspacePath.trim();
+    if (trimmedWorkspace && !config.cwd) {
+      config.cwd = trimmedWorkspace;
+    }
     return config;
   }
 
@@ -390,6 +396,11 @@ export function OnboardingWizard() {
       const company = await companiesApi.create({
         name: companyName.trim(),
         workspacePath: workspacePath.trim() || null,
+      });
+      // Task mode: PM is the root agent and must be able to hire sub-agents
+      // without BD approval gating every hire.
+      await companiesApi.update(company.id, {
+        requireBoardApprovalForNewAgents: false,
       });
       setCreatedCompanyId(company.id);
       setCreatedCompanyPrefix(company.issuePrefix);
@@ -470,6 +481,8 @@ export function OnboardingWizard() {
         role: "ceo",
         adapterType,
         adapterConfig: buildAdapterConfig(),
+        // Task mode: PM needs to hire the rest of the team autonomously.
+        permissions: { canCreateAgents: true },
         runtimeConfig: {
           heartbeat: {
             enabled: true,

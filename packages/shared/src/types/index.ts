@@ -98,6 +98,12 @@ export type {
 } from "./issue.js";
 export type { Goal } from "./goal.js";
 export type { Approval, ApprovalComment } from "./approval.js";
+export {
+  TASK_QUESTION_STATUSES,
+  TASK_QUESTION_MAX_RETRIES,
+  type TaskQuestion,
+  type TaskQuestionStatus,
+} from "./task-question.js";
 export type {
   BudgetPolicy,
   BudgetPolicySummary,

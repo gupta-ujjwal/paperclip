@@ -603,6 +603,24 @@ export {
 } from "./config-schema.js";
 
 export {
+  askManagerSchema,
+  answerQuestionSchema,
+  rejectAnswerSchema,
+  listTaskQuestionsQuerySchema,
+  type AskManager,
+  type AnswerQuestion,
+  type RejectAnswer,
+  type ListTaskQuestionsQuery,
+} from "./validators/task-question.js";
+
+export {
+  TASK_QUESTION_STATUSES,
+  TASK_QUESTION_MAX_RETRIES,
+  type TaskQuestion,
+  type TaskQuestionStatus,
+} from "./types/task-question.js";
+
+export {
   TASK_ISSUE_OUTPUT_STATUSES,
   taskIssueOutputArtifactSchema,
   taskIssueOutputGitRefSchema,

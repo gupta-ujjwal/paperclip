@@ -1,4 +1,15 @@
 export {
+  askManagerSchema,
+  answerQuestionSchema,
+  rejectAnswerSchema,
+  listTaskQuestionsQuerySchema,
+  type AskManager,
+  type AnswerQuestion,
+  type RejectAnswer,
+  type ListTaskQuestionsQuery,
+} from "./task-question.js";
+
+export {
   instanceGeneralSettingsSchema,
   patchInstanceGeneralSettingsSchema,
   type InstanceGeneralSettings,

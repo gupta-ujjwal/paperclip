@@ -9,14 +9,29 @@ function resolveDefaultAgentBundleUrl(fileName: string) {
   return new URL(`../onboarding-assets/default/${fileName}`, import.meta.url);
 }
 
-function renderTaskRoleChapter(taskRoleName: TaskRoleName): string {
+function renderTaskRoleChapter(
+  taskRoleName: TaskRoleName,
+  options?: { taskDescription?: string },
+): string {
   const role = getTaskRole(taskRoleName);
   const toolsList = role.default_tools.map((tool) => `- ${tool}`).join("\n");
-  return [
+  const sections = [
     `# Task-Mode Role: ${role.label}`,
     "",
     role.system_prompt,
     "",
+  ];
+
+  if (options?.taskDescription) {
+    sections.push(
+      "## Your Assignment",
+      "",
+      options.taskDescription,
+      "",
+    );
+  }
+
+  sections.push(
     "## Default tool set",
     toolsList,
     "",
@@ -33,19 +48,23 @@ function renderTaskRoleChapter(taskRoleName: TaskRoleName): string {
     "",
     "See the `task-mode` skill for payload shapes.",
     "",
-  ].join("\n");
+  );
+
+  return sections.join("\n");
 }
 
 export async function loadDefaultAgentInstructionsBundle(
   _role: string,
-  options: { agentRole?: string } = {},
+  options: { agentRole?: string; taskDescription?: string } = {},
 ): Promise<Record<string, string>> {
   const content = await fs.readFile(resolveDefaultAgentBundleUrl("AGENTS.md"), "utf8");
   const bundle: Record<string, string> = { "AGENTS.md": content };
 
   const agentRole = options.agentRole;
   if (agentRole && isTaskRoleName(agentRole)) {
-    bundle["TASK_ROLE.md"] = renderTaskRoleChapter(agentRole);
+    bundle["TASK_ROLE.md"] = renderTaskRoleChapter(agentRole, {
+      taskDescription: options.taskDescription,
+    });
   }
 
   return bundle;

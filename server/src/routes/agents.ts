@@ -440,7 +440,7 @@ export function agentRoutes(db: Db) {
     role: string;
     adapterType: string;
     adapterConfig: unknown;
-  }>(agent: T): Promise<T> {
+  }>(agent: T, options?: { taskDescription?: string }): Promise<T> {
     if (!DEFAULT_MANAGED_INSTRUCTIONS_ADAPTER_TYPES.has(agent.adapterType)) {
       return agent;
     }
@@ -462,7 +462,7 @@ export function agentRoutes(db: Db) {
     const files = promptTemplate.trim().length === 0
       ? await loadDefaultAgentInstructionsBundle(
           resolveDefaultAgentInstructionsBundleRole(agent.role),
-          { agentRole: agent.role },
+          { agentRole: agent.role, taskDescription: options?.taskDescription ?? undefined },
         )
       : { "AGENTS.md": promptTemplate };
     const materialized = await instructions.materializeManagedBundle(
@@ -1180,6 +1180,7 @@ export function agentRoutes(db: Db) {
       desiredSkills: requestedDesiredSkills,
       sourceIssueId: _sourceIssueId,
       sourceIssueIds: _sourceIssueIds,
+      taskDescription: hireTaskDescription,
       ...hireInput
     } = req.body;
     const requestedAdapterConfig = applyCreateDefaultsByAdapterType(
@@ -1225,7 +1226,9 @@ export function agentRoutes(db: Db) {
       spentMonthlyCents: 0,
       lastHeartbeatAt: null,
     });
-    const agent = await materializeDefaultInstructionsBundleForNewAgent(createdAgent);
+    const agent = await materializeDefaultInstructionsBundleForNewAgent(createdAgent, {
+      taskDescription: typeof hireTaskDescription === "string" ? hireTaskDescription : undefined,
+    });
 
     let approval: Awaited<ReturnType<typeof approvalsSvc.getById>> | null = null;
     const actor = getActorInfo(req);

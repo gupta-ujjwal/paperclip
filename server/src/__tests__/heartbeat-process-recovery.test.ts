@@ -93,7 +93,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
       id: agentId,
       companyId,
       name: "CodexCoder",
-      role: "engineer",
+      role: "sde2",
       status: "paused",
       adapterType: input?.adapterType ?? "codex_local",
       adapterConfig: {},

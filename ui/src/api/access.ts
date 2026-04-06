@@ -5,7 +5,7 @@ type InviteSummary = {
   id: string;
   companyId: string | null;
   companyName?: string | null;
-  inviteType: "company_join" | "bootstrap_ceo";
+  inviteType: "company_join" | "bootstrap_pm";
   allowedJoinTypes: "human" | "agent" | "both";
   expiresAt: string;
   onboardingPath?: string;

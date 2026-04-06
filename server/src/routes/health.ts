@@ -57,7 +57,7 @@ export function healthRoutes(
           .from(invites)
           .where(
             and(
-              eq(invites.inviteType, "bootstrap_ceo"),
+              eq(invites.inviteType, "bootstrap_pm"),
               isNull(invites.revokedAt),
               isNull(invites.acceptedAt),
               gt(invites.expiresAt, now),

@@ -102,7 +102,7 @@ test.describe("Onboarding wizard", () => {
       (a: { name: string }) => a.name === AGENT_NAME
     );
     expect(ceoAgent).toBeTruthy();
-    expect(ceoAgent.role).toBe("ceo");
+    expect(ceoAgent.role).toBe("pm");
     expect(ceoAgent.adapterType).not.toBe("process");
 
     const instructionsBundleRes = await page.request.get(

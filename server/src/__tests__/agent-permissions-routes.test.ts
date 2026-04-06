@@ -13,7 +13,7 @@ const baseAgent = {
   companyId,
   name: "Builder",
   urlKey: "builder",
-  role: "engineer",
+  role: "sde2",
   title: "Builder",
   icon: null,
   status: "idle",
@@ -190,7 +190,7 @@ describe("agent permission routes", () => {
       .post(`/api/companies/${companyId}/agents`)
       .send({
         name: "Builder",
-        role: "engineer",
+        role: "sde2",
         adapterType: "process",
         adapterConfig: {},
       });

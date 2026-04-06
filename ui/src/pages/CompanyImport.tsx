@@ -690,7 +690,7 @@ export function CompanyImport() {
   const [adapterExpandedSlugs, setAdapterExpandedSlugs] = useState<Set<string>>(new Set());
   const [adapterConfigValues, setAdapterConfigValues] = useState<Record<string, CreateConfigValues>>({});
 
-  // Fetch current company agents to find CEO adapter type
+  // Fetch current company agents to find PM adapter type
   const { data: companyAgents } = useQuery({
     queryKey: selectedCompanyId ? queryKeys.agents.list(selectedCompanyId) : ["agents", "none"],
     queryFn: () => agentsApi.list(selectedCompanyId!),
@@ -698,8 +698,8 @@ export function CompanyImport() {
   });
   const ceoAdapterType = useMemo(() => {
     if (!companyAgents) return "claude_local";
-    const ceo = companyAgents.find((a) => a.role === "ceo");
-    return ceo?.adapterType ?? "claude_local";
+    const pm = companyAgents.find((a) => a.role === "pm");
+    return pm?.adapterType ?? "claude_local";
   }, [companyAgents]);
 
   const localZipHelpText =

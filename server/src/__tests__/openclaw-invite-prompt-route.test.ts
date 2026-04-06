@@ -116,7 +116,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
-      role: "engineer",
+      role: "sde2",
     });
     const app = createApp(
       {
@@ -133,7 +133,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
       .send({});
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("Only agents with canCreateAgents");
   });
 
   it("allows CEO agent callers and creates an agent-only invite", async () => {
@@ -141,7 +141,8 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
-      role: "ceo",
+      role: "pm",
+      permissions: { canCreateAgents: true },
     });
     const app = createApp(
       {

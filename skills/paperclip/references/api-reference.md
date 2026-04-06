@@ -523,11 +523,11 @@ Use `paperclip-create-agent` for the full hiring workflow (reflection + config c
 
 ### CEO strategy approval
 
-If you are the CEO, your first strategic plan must be approved before you can move tasks to `in_progress`:
+If hiring requires board approval, submit a hire request:
 
 ```
 POST /api/companies/{companyId}/approvals
-{ "type": "approve_ceo_strategy", "requestedByAgentId": "{your-agent-id}", "payload": { "plan": "..." } }
+{ "type": "hire_agent", "requestedByAgentId": "{your-agent-id}", "payload": { "name": "...", "role": "..." } }
 ```
 
 ### Checking approval status

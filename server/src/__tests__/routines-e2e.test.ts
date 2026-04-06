@@ -146,7 +146,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
       id: agentId,
       companyId,
       name: "CodexCoder",
-      role: "engineer",
+      role: "sde2",
       status: "active",
       adapterType: "codex_local",
       adapterConfig: {},

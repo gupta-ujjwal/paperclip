@@ -136,17 +136,16 @@ const ROLE_ICONS: Record<string, {
 };
 
 function guessRoleTag(node: OrgNode): string {
-  const name = node.name.toLowerCase();
   const role = node.role.toLowerCase();
-  if (name === "ceo" || role.includes("chief executive")) return "ceo";
-  if (name === "cto" || role.includes("chief technology") || role.includes("technology")) return "cto";
-  if (name === "cmo" || role.includes("chief marketing") || role.includes("marketing")) return "cmo";
-  if (name === "cfo" || role.includes("chief financial")) return "cfo";
-  if (name === "coo" || role.includes("chief operating")) return "coo";
-  if (role.includes("engineer") || role.includes("eng")) return "engineer";
+  if (role === "pm" || role.includes("program manager")) return "ceo"; // PM uses crown icon (top of hierarchy)
+  if (role === "em" || role.includes("engineering manager")) return "cto";
+  if (role === "product_manager" || role.includes("product manager")) return "cmo";
+  if (role === "program_manager") return "coo";
+  if (role === "research_analyst" || role.includes("research")) return "quality";
+  if (role === "sde2" || role === "sde1" || role.includes("engineer") || role.includes("eng")) return "engineer";
   if (role.includes("quality") || role.includes("qa")) return "quality";
+  if (role === "bd" || role.includes("business")) return "finance";
   if (role.includes("design")) return "design";
-  if (role.includes("finance")) return "finance";
   if (role.includes("operations") || role.includes("ops")) return "operations";
   return "default";
 }
@@ -231,9 +230,9 @@ const THEMES: Record<OrgChartStyle, StyleTheme> = {
     renderCard: (ln: LayoutNode, theme: StyleTheme) => {
       const { tag, roleLabel, emojiSvg } = getRoleInfo(ln.node);
       const cx = ln.x + ln.width / 2;
-      const isCeo = tag === "ceo";
-      const borderColor = isCeo ? "rgba(168,85,247,0.35)" : theme.cardBorder;
-      const bgColor = isCeo ? "rgba(168,85,247,0.06)" : theme.cardBg;
+      const isPm = tag === "ceo"; // PM uses the crown/accent styling
+      const borderColor = isPm ? "rgba(168,85,247,0.35)" : theme.cardBorder;
+      const bgColor = isPm ? "rgba(168,85,247,0.06)" : theme.cardBg;
 
       const avatarCY = ln.y + 27;
       const nameY = ln.y + 66;

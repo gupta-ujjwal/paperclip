@@ -92,7 +92,7 @@ test.describe("Docker authenticated onboarding smoke", () => {
     }>;
     const ceoAgent = agents.find((entry) => entry.name === AGENT_NAME);
     expect(ceoAgent).toBeTruthy();
-    expect(ceoAgent!.role).toBe("ceo");
+    expect(ceoAgent!.role).toBe("pm");
     expect(ceoAgent!.adapterType).not.toBe("process");
 
     const issuesRes = await page.request.get(

@@ -41,8 +41,8 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     if (!actorAgent || actorAgent.companyId !== companyId) {
       throw forbidden("Agent key cannot access another company");
     }
-    if (actorAgent.role !== "ceo") {
-      throw forbidden("Only CEO agents can update company branding");
+    if (!actorAgent.permissions || !(actorAgent.permissions as Record<string, unknown>).canCreateAgents) {
+      throw forbidden("Only agents with canCreateAgents can update company branding");
     }
   }
 
@@ -55,8 +55,8 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     if (!actorAgent || actorAgent.companyId !== companyId) {
       throw forbidden("Agent key cannot access another company");
     }
-    if (actorAgent.role !== "ceo") {
-      throw forbidden(`Only CEO agents can manage company ${capability}`);
+    if (!actorAgent.permissions || !(actorAgent.permissions as Record<string, unknown>).canCreateAgents) {
+      throw forbidden(`Only agents with canCreateAgents can manage company ${capability}`);
     }
   }
 
@@ -255,8 +255,8 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       // Only CEO agents may update company branding fields
       const agentSvc = agentService(db);
       const actorAgent = req.actor.agentId ? await agentSvc.getById(req.actor.agentId) : null;
-      if (!actorAgent || actorAgent.role !== "ceo") {
-        throw forbidden("Only CEO agents or board users may update company settings");
+      if (!actorAgent || !actorAgent.permissions || !(actorAgent.permissions as Record<string, unknown>).canCreateAgents) {
+        throw forbidden("Only agents with canCreateAgents or board users may update company settings");
       }
       if (actorAgent.companyId !== companyId) {
         throw forbidden("Agent key cannot access another company");

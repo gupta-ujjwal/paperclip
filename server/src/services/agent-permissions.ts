@@ -1,10 +1,13 @@
+import { isTaskRoleName, getTaskRole } from "@paperclipai/shared";
+
 export type NormalizedAgentPermissions = Record<string, unknown> & {
   canCreateAgents: boolean;
 };
 
 export function defaultPermissionsForRole(role: string): NormalizedAgentPermissions {
+  const canHire = isTaskRoleName(role) ? getTaskRole(role).can_hire : false;
   return {
-    canCreateAgents: role === "ceo",
+    canCreateAgents: canHire,
   };
 }
 

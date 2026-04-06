@@ -35,31 +35,21 @@ export const AGENT_ADAPTER_TYPES = [
 export type AgentAdapterType = (typeof AGENT_ADAPTER_TYPES)[number];
 
 export const AGENT_ROLES = [
-  "ceo",
-  "cto",
-  "cmo",
-  "cfo",
-  "engineer",
-  "designer",
-  "pm",
-  "qa",
-  "devops",
-  "researcher",
-  "general",
+  "pm", "em", "product_manager", "program_manager",
+  "research_analyst", "sde2", "sde1", "qa", "bd", "general",
 ] as const;
 export type AgentRole = (typeof AGENT_ROLES)[number];
 
 export const AGENT_ROLE_LABELS: Record<AgentRole, string> = {
-  ceo: "PM",
-  cto: "CTO",
-  cmo: "CMO",
-  cfo: "CFO",
-  engineer: "Engineer",
-  designer: "Designer",
-  pm: "Program Manager",
+  pm: "PM",
+  em: "Engineering Manager",
+  product_manager: "Product Manager",
+  program_manager: "Program Manager",
+  research_analyst: "Research Analyst",
+  sde2: "Senior Engineer",
+  sde1: "Junior Engineer",
   qa: "QA",
-  devops: "DevOps",
-  researcher: "Researcher",
+  bd: "Business Development",
   general: "General",
 };
 
@@ -194,7 +184,7 @@ export const PROJECT_COLORS = [
   "#3b82f6", // blue
 ] as const;
 
-export const APPROVAL_TYPES = ["hire_agent", "approve_ceo_strategy", "budget_override_required"] as const;
+export const APPROVAL_TYPES = ["hire_agent", "budget_override_required"] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
 export const APPROVAL_STATUSES = [
@@ -339,7 +329,7 @@ export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
 export const INSTANCE_USER_ROLES = ["instance_admin"] as const;
 export type InstanceUserRole = (typeof INSTANCE_USER_ROLES)[number];
 
-export const INVITE_TYPES = ["company_join", "bootstrap_ceo"] as const;
+export const INVITE_TYPES = ["company_join", "bootstrap_pm"] as const;
 export type InviteType = (typeof INVITE_TYPES)[number];
 
 export const INVITE_JOIN_TYPES = ["human", "agent", "both"] as const;

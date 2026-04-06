@@ -116,7 +116,7 @@ function makeAgent(adapterType: string) {
     id: "11111111-1111-4111-8111-111111111111",
     companyId: "company-1",
     name: "Agent",
-    role: "engineer",
+    role: "sde2",
     title: "Engineer",
     status: "active",
     reportsTo: null,
@@ -292,7 +292,7 @@ describe("agent skill routes", () => {
       .post("/api/companies/company-1/agents")
       .send({
         name: "QA Agent",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
         desiredSkills: ["paperclip"],
         adapterConfig: {},
@@ -317,7 +317,7 @@ describe("agent skill routes", () => {
       .post("/api/companies/company-1/agents")
       .send({
         name: "QA Agent",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
         adapterConfig: {
           promptTemplate: "You are QA.",
@@ -350,12 +350,12 @@ describe("agent skill routes", () => {
     });
   });
 
-  it("materializes the bundled CEO instruction set for default CEO agents", async () => {
+  it("materializes the bundled PM instruction set for default PM agents", async () => {
     const res = await request(createApp())
       .post("/api/companies/company-1/agents")
       .send({
-        name: "CEO",
-        role: "ceo",
+        name: "PM",
+        role: "pm",
         adapterType: "claude_local",
         adapterConfig: {},
       });
@@ -364,14 +364,12 @@ describe("agent skill routes", () => {
     expect(mockAgentInstructionsService.materializeManagedBundle).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "11111111-1111-4111-8111-111111111111",
-        role: "ceo",
+        role: "pm",
         adapterType: "claude_local",
       }),
       expect.objectContaining({
-        "AGENTS.md": expect.stringContaining("You are the CEO."),
-        "HEARTBEAT.md": expect.stringContaining("CEO Heartbeat Checklist"),
-        "SOUL.md": expect.stringContaining("CEO Persona"),
-        "TOOLS.md": expect.stringContaining("# Tools"),
+        "AGENTS.md": expect.stringContaining("Paperclip-managed workspace"),
+        "TASK_ROLE.md": expect.stringContaining("Task-Mode Role: PM"),
       }),
       { entryFile: "AGENTS.md", replaceExisting: false },
     );
@@ -382,7 +380,7 @@ describe("agent skill routes", () => {
       .post("/api/companies/company-1/agents")
       .send({
         name: "Engineer",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
         adapterConfig: {},
       });
@@ -391,11 +389,11 @@ describe("agent skill routes", () => {
     expect(mockAgentInstructionsService.materializeManagedBundle).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "11111111-1111-4111-8111-111111111111",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
       }),
       expect.objectContaining({
-        "AGENTS.md": expect.stringContaining("Keep the work moving until it's done."),
+        "AGENTS.md": expect.stringContaining("Paperclip-managed workspace"),
       }),
       { entryFile: "AGENTS.md", replaceExisting: false },
     );
@@ -408,7 +406,7 @@ describe("agent skill routes", () => {
       .post("/api/companies/company-1/agent-hires")
       .send({
         name: "QA Agent",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
         desiredSkills: ["paperclip"],
         adapterConfig: {},
@@ -434,7 +432,7 @@ describe("agent skill routes", () => {
       .post("/api/companies/company-1/agent-hires")
       .send({
         name: "QA Agent",
-        role: "engineer",
+        role: "sde2",
         adapterType: "claude_local",
         adapterConfig: {
           promptTemplate: "You are QA.",

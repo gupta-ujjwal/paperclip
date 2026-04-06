@@ -37,7 +37,7 @@ function buildAgent(adapterType: string, runtimeConfig: Record<string, unknown> 
     projectId: null,
     goalId: null,
     name: "Agent",
-    role: "engineer",
+    role: "sde2",
     title: null,
     icon: null,
     status: "running",

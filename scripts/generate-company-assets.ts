@@ -96,27 +96,27 @@ function parseFrontmatter(content: string): { data: Record<string, unknown>; bod
 // ── Slug to role mapping ─────────────────────────────────────────
 
 const SLUG_TO_ROLE: Record<string, string> = {
-  ceo: "ceo",
-  cto: "cto",
-  cmo: "cmo",
-  cfo: "cfo",
-  coo: "coo",
+  ceo: "pm",
+  cto: "em",
+  cmo: "product_manager",
+  cfo: "program_manager",
+  coo: "program_manager",
 };
 
 function inferRole(slug: string, title: string | null): string {
   // Check direct slug match first
   if (SLUG_TO_ROLE[slug]) return SLUG_TO_ROLE[slug];
 
-  // Check title for C-suite
+  // Check title for task-mode roles
   const t = (title || "").toLowerCase();
-  if (t.includes("chief executive")) return "ceo";
-  if (t.includes("chief technology")) return "cto";
-  if (t.includes("chief marketing")) return "cmo";
-  if (t.includes("chief financial")) return "cfo";
-  if (t.includes("chief operating")) return "coo";
-  if (t.includes("vp") || t.includes("vice president")) return "vp";
-  if (t.includes("manager")) return "manager";
-  if (t.includes("qa") || t.includes("quality")) return "engineer";
+  if (t.includes("chief executive") || t.includes("pm")) return "pm";
+  if (t.includes("chief technology") || t.includes("engineering manager")) return "em";
+  if (t.includes("chief marketing") || t.includes("product manager")) return "product_manager";
+  if (t.includes("chief financial") || t.includes("program manager")) return "program_manager";
+  if (t.includes("chief operating")) return "program_manager";
+  if (t.includes("vp") || t.includes("vice president")) return "em";
+  if (t.includes("manager")) return "em";
+  if (t.includes("qa") || t.includes("quality")) return "qa";
 
   // Default to engineer
   return "engineer";

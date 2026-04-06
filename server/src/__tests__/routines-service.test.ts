@@ -100,7 +100,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
       id: agentId,
       companyId,
       name: "CodexCoder",
-      role: "engineer",
+      role: "sde2",
       status: "active",
       adapterType: "codex_local",
       adapterConfig: {},

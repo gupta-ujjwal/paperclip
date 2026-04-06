@@ -72,7 +72,7 @@ export function InviteLandingPage() {
   const companyName = invite?.companyName?.trim() || null;
   const allowedJoinTypes = invite?.allowedJoinTypes ?? "both";
   const availableJoinTypes = useMemo(() => {
-    if (invite?.inviteType === "bootstrap_ceo") return ["human"] as JoinType[];
+    if (invite?.inviteType === "bootstrap_pm") return ["human"] as JoinType[];
     if (allowedJoinTypes === "both") return ["human", "agent"] as JoinType[];
     return [allowedJoinTypes] as JoinType[];
   }, [invite?.inviteType, allowedJoinTypes]);
@@ -91,7 +91,7 @@ export function InviteLandingPage() {
   const acceptMutation = useMutation({
     mutationFn: async () => {
       if (!invite) throw new Error("Invite not found");
-      if (invite.inviteType === "bootstrap_ceo") {
+      if (invite.inviteType === "bootstrap_pm") {
         return accessApi.acceptInvite(token, { requestType: "human" });
       }
       if (joinType === "human") {
@@ -228,20 +228,20 @@ export function InviteLandingPage() {
     <div className="mx-auto max-w-xl py-10">
       <div className="rounded-lg border border-border bg-card p-6">
         <h1 className="text-xl font-semibold">
-          {invite.inviteType === "bootstrap_ceo"
+          {invite.inviteType === "bootstrap_pm"
             ? "Bootstrap your Paperclip instance"
             : companyName
               ? `Join ${companyName}`
               : "Join this Paperclip company"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {invite.inviteType !== "bootstrap_ceo" && companyName
+          {invite.inviteType !== "bootstrap_pm" && companyName
             ? `You were invited to join ${companyName}. `
             : null}
           Invite expires {dateTime(invite.expiresAt)}.
         </p>
 
-        {invite.inviteType !== "bootstrap_ceo" && (
+        {invite.inviteType !== "bootstrap_pm" && (
           <div className="mt-5 flex gap-2">
             {availableJoinTypes.map((type) => (
               <button
@@ -260,7 +260,7 @@ export function InviteLandingPage() {
           </div>
         )}
 
-        {joinType === "agent" && invite.inviteType !== "bootstrap_ceo" && (
+        {joinType === "agent" && invite.inviteType !== "bootstrap_pm" && (
           <div className="mt-4 space-y-3">
             <label className="block text-sm">
               <span className="mb-1 block text-muted-foreground">Agent name</span>
@@ -313,14 +313,14 @@ export function InviteLandingPage() {
           className="mt-5"
           disabled={
             acceptMutation.isPending ||
-            (joinType === "agent" && invite.inviteType !== "bootstrap_ceo" && agentName.trim().length === 0) ||
+            (joinType === "agent" && invite.inviteType !== "bootstrap_pm" && agentName.trim().length === 0) ||
             requiresAuthForHuman
           }
           onClick={() => acceptMutation.mutate()}
         >
           {acceptMutation.isPending
             ? "Submitting…"
-            : invite.inviteType === "bootstrap_ceo"
+            : invite.inviteType === "bootstrap_pm"
               ? "Accept bootstrap invite"
               : "Submit join request"}
         </Button>

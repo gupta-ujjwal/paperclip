@@ -101,7 +101,7 @@ export function NewAgent() {
   });
 
   const isFirstAgent = !agents || agents.length === 0;
-  const effectiveRole = isFirstAgent ? "ceo" : role;
+  const effectiveRole = isFirstAgent ? "pm" : role;
 
   useEffect(() => {
     setBreadcrumbs([

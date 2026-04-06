@@ -87,7 +87,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
-      role: "engineer",
+      role: "sde2",
     });
     const app = createApp({
       type: "agent",
@@ -102,7 +102,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
       .send({ logoAssetId: "11111111-1111-4111-8111-111111111111" });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Only CEO agents");
+    expect(res.body.error).toContain("Only agents with canCreateAgents");
     expect(mockCompanyService.update).not.toHaveBeenCalled();
   });
 
@@ -111,7 +111,8 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
       companyId: "company-1",
-      role: "ceo",
+      role: "pm",
+      permissions: { canCreateAgents: true },
     });
     mockCompanyService.update.mockResolvedValue(company);
     const app = createApp({

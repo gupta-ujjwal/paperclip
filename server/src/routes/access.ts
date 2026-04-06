@@ -1453,14 +1453,14 @@ type JoinRequestManagerCandidate = {
 export function resolveJoinRequestAgentManagerId(
   candidates: JoinRequestManagerCandidate[]
 ): string | null {
-  const ceoCandidates = candidates.filter(
-    (candidate) => candidate.role === "ceo"
+  const pmCandidates = candidates.filter(
+    (candidate) => candidate.role === "pm"
   );
-  if (ceoCandidates.length === 0) return null;
-  const rootCeo = ceoCandidates.find(
+  if (pmCandidates.length === 0) return null;
+  const rootPm = pmCandidates.find(
     (candidate) => candidate.reportsTo === null
   );
-  return (rootCeo ?? ceoCandidates[0] ?? null)?.id ?? null;
+  return (rootPm ?? pmCandidates[0] ?? null)?.id ?? null;
 }
 
 function isInviteTokenHashCollisionError(error: unknown) {
@@ -1833,8 +1833,8 @@ export function accessRoutes(
       if (!actorAgent || actorAgent.companyId !== companyId) {
         throw forbidden("Agent key cannot access another company");
       }
-      if (actorAgent.role !== "ceo") {
-        throw forbidden("Only CEO agents can generate OpenClaw invite prompts");
+      if (!actorAgent.permissions || !(actorAgent.permissions as Record<string, unknown>).canCreateAgents) {
+        throw forbidden("Only agents with canCreateAgents can generate OpenClaw invite prompts");
       }
       return;
     }
@@ -2166,7 +2166,7 @@ export function accessRoutes(
             .then((rows) => rows[0] ?? null)
         : null;
 
-      if (invite.inviteType === "bootstrap_ceo") {
+      if (invite.inviteType === "bootstrap_pm") {
         if (inviteAlreadyAccepted) throw notFound("Invite not found");
         if (req.body.requestType !== "human") {
           throw badRequest("Bootstrap invite requires human request type");
@@ -2543,7 +2543,7 @@ export function accessRoutes(
       .where(eq(invites.id, id))
       .then((rows) => rows[0] ?? null);
     if (!invite) throw notFound("Invite not found");
-    if (invite.inviteType === "bootstrap_ceo") {
+    if (invite.inviteType === "bootstrap_pm") {
       await assertInstanceAdmin(req);
     } else {
       if (!invite.companyId) throw conflict("Invite is missing company scope");

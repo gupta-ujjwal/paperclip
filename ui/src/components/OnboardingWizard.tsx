@@ -478,7 +478,7 @@ export function OnboardingWizard() {
 
       const agent = await agentsApi.create(createdCompanyId, {
         name: agentName.trim(),
-        role: "ceo",
+        role: "pm",
         adapterType,
         adapterConfig: buildAdapterConfig(),
         // Task mode: PM needs to hire the rest of the team autonomously.

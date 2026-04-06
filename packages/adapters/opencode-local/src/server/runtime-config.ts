@@ -55,12 +55,20 @@ export async function prepareOpenCodeRuntimeConfig(input: {
       recursive: true,
       force: true,
       errorOnExist: false,
-      dereference: false,
+      dereference: true,
     });
   } catch (err) {
     if ((err as NodeJS.ErrnoException | null)?.code !== "ENOENT") {
       throw err;
     }
+  }
+
+  // Ensure the config file is writable — source may have read-only permissions
+  // (e.g. Nix store files are 444).
+  try {
+    await fs.chmod(runtimeConfigPath, 0o644);
+  } catch {
+    // File may not exist yet if source dir was empty; that's fine.
   }
 
   const existingConfig = await readJsonObject(runtimeConfigPath);

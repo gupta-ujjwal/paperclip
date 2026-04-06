@@ -10,6 +10,7 @@ import {
   agentRuntimeState,
   agentTaskSessions,
   agentWakeupRequests,
+  companies,
   heartbeatRunEvents,
   heartbeatRuns,
   issues,
@@ -316,7 +317,7 @@ interface ParsedIssueAssigneeAdapterOverrides {
 
 export type ResolvedWorkspaceForRun = {
   cwd: string;
-  source: "project_primary" | "task_session" | "agent_home";
+  source: "project_primary" | "task_session" | "company_workspace" | "agent_home";
   projectId: string | null;
   workspaceId: string | null;
   repoUrl: string | null;
@@ -1358,6 +1359,38 @@ export function heartbeatService(db: Db) {
           repoRef: readNonEmptyString(previousSessionParams?.repoRef),
           workspaceHints,
           warnings: [],
+        };
+      }
+    }
+
+    // Fallback: use the company's configured workspacePath if available
+    const companyRow = await db
+      .select({ workspacePath: companies.workspacePath })
+      .from(companies)
+      .where(eq(companies.id, agent.companyId))
+      .then((rows) => rows[0] ?? null);
+    const companyWorkspacePath = readNonEmptyString(companyRow?.workspacePath);
+    if (companyWorkspacePath) {
+      const companyWsExists = await fs
+        .stat(companyWorkspacePath)
+        .then((stats) => stats.isDirectory())
+        .catch(() => false);
+      if (companyWsExists) {
+        const companyWarnings: string[] = [];
+        if (sessionCwd) {
+          companyWarnings.push(
+            `Saved session workspace "${sessionCwd}" is not available. Using company workspace "${companyWorkspacePath}" for this run.`,
+          );
+        }
+        return {
+          cwd: companyWorkspacePath,
+          source: "company_workspace" as const,
+          projectId: resolvedProjectId,
+          workspaceId: null,
+          repoUrl: null,
+          repoRef: null,
+          workspaceHints,
+          warnings: companyWarnings,
         };
       }
     }

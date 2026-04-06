@@ -26,7 +26,7 @@ import { readProjectWorkspaceRuntimeConfig } from "./project-workspace-runtime-c
 
 export interface ExecutionWorkspaceInput {
   baseCwd: string;
-  source: "project_primary" | "task_session" | "agent_home";
+  source: "project_primary" | "task_session" | "company_workspace" | "agent_home";
   projectId: string | null;
   workspaceId: string | null;
   repoUrl: string | null;

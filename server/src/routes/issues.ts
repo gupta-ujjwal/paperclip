@@ -1256,6 +1256,61 @@ export function issueRoutes(db: Db, storage: StorageService) {
         }
       }
 
+      // When an issue reaches a terminal state ("done" or "cancelled"), notify
+      // the assignee's manager (reportsTo) and the agent that created the issue
+      // so they can act on the completion in their next heartbeat.
+      const isTerminal = (issue.status === "done" || issue.status === "cancelled") &&
+        existing.status !== "done" && existing.status !== "cancelled";
+
+      if (isTerminal) {
+        const managerIds = new Set<string>();
+
+        // Look up the assignee's manager via reportsTo
+        if (issue.assigneeAgentId) {
+          try {
+            const assigneeAgent = await agentsSvc.getById(issue.assigneeAgentId);
+            if (assigneeAgent?.reportsTo) {
+              managerIds.add(assigneeAgent.reportsTo);
+            }
+          } catch (err) {
+            logger.warn({ err, agentId: issue.assigneeAgentId }, "failed to look up assignee agent for manager wakeup");
+          }
+        }
+
+        // Also notify the agent that created the issue (if any)
+        if (issue.createdByAgentId) {
+          managerIds.add(issue.createdByAgentId);
+        }
+
+        for (const managerId of managerIds) {
+          // Don't wake the same agent that just completed the task, and don't
+          // override a more specific wakeup already queued for this agent.
+          if (managerId === issue.assigneeAgentId) continue;
+          if (wakeups.has(managerId)) continue;
+
+          wakeups.set(managerId, {
+            source: "automation",
+            triggerDetail: "system",
+            reason: "subordinate_task_completed",
+            payload: {
+              issueId: issue.id,
+              issueIdentifier: issue.identifier,
+              issueTitle: issue.title,
+              completedStatus: issue.status,
+              completedByAgentId: issue.assigneeAgentId,
+            },
+            requestedByActorType: actor.actorType,
+            requestedByActorId: actor.actorId,
+            contextSnapshot: {
+              issueId: issue.id,
+              source: "issue.subordinate_completed",
+              completedStatus: issue.status,
+              completedByAgentId: issue.assigneeAgentId,
+            },
+          });
+        }
+      }
+
       for (const [agentId, wakeup] of wakeups.entries()) {
         heartbeat
           .wakeup(agentId, wakeup)

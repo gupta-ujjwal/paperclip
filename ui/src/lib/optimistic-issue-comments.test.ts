@@ -162,6 +162,7 @@ describe("optimistic issue comments", () => {
         hiddenAt: null,
         createdAt: new Date("2026-03-28T14:00:00.000Z"),
         updatedAt: new Date("2026-03-28T14:00:00.000Z"),
+        progress: 0,
       },
       {
         reopen: true,

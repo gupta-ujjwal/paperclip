@@ -80,6 +80,7 @@ export interface Agent {
   permissions: AgentPermissions;
   gitBranch: string | null;
   lastHeartbeatAt: Date | null;
+  currentActivity: string | null;
   metadata: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;

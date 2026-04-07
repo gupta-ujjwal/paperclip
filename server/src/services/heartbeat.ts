@@ -1207,9 +1207,31 @@ export function heartbeatService(db: Db) {
           .where(and(eq(issues.id, issueId), eq(issues.companyId, agent.companyId)))
           .then((rows) => rows[0] ?? null)
       : null;
-    const issueProjectId = issueProjectRef?.projectId ?? null;
+    // If this issue has no project, check its parent issue's project (task-mode inheritance)
+    let effectiveProjectRef = issueProjectRef;
+    if (issueId && !issueProjectRef?.projectId) {
+      const childIssue = await db
+        .select({ parentId: issues.parentId })
+        .from(issues)
+        .where(and(eq(issues.id, issueId), eq(issues.companyId, agent.companyId)))
+        .then((r) => r[0] ?? null);
+      if (childIssue?.parentId) {
+        const parentRef = await db
+          .select({
+            projectId: issues.projectId,
+            projectWorkspaceId: issues.projectWorkspaceId,
+          })
+          .from(issues)
+          .where(and(eq(issues.id, childIssue.parentId), eq(issues.companyId, agent.companyId)))
+          .then((r) => r[0] ?? null);
+        if (parentRef?.projectId) {
+          effectiveProjectRef = parentRef;
+        }
+      }
+    }
+    const issueProjectId = effectiveProjectRef?.projectId ?? null;
     const preferredProjectWorkspaceId =
-      issueProjectRef?.projectWorkspaceId ?? contextProjectWorkspaceId ?? null;
+      effectiveProjectRef?.projectWorkspaceId ?? contextProjectWorkspaceId ?? null;
     const resolvedProjectId = issueProjectId ?? contextProjectId;
     const useProjectWorkspace = opts?.useProjectWorkspace !== false;
     const workspaceProjectId = useProjectWorkspace ? resolvedProjectId : null;

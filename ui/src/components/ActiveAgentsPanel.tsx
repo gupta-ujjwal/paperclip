@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Link } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
-import type { Issue } from "@paperclipai/shared";
+import type { Agent, Issue } from "@paperclipai/shared";
 import { heartbeatsApi, type LiveRunForIssue } from "../api/heartbeats";
 import { issuesApi } from "../api/issues";
+import { agentsApi } from "../api/agents";
 import type { TranscriptEntry } from "../adapters";
 import { queryKeys } from "../lib/queryKeys";
 import { cn, relativeTime } from "../lib/utils";
@@ -27,6 +28,20 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
     queryKey: [...queryKeys.liveRuns(companyId), "dashboard"],
     queryFn: () => heartbeatsApi.liveRunsForCompany(companyId, MIN_DASHBOARD_RUNS),
   });
+
+  const { data: agents } = useQuery({
+    queryKey: queryKeys.agents.list(companyId),
+    queryFn: () => agentsApi.list(companyId),
+    enabled: !!companyId,
+  });
+
+  const agentById = useMemo(() => {
+    const map = new Map<string, Agent>();
+    for (const agent of agents ?? []) {
+      map.set(agent.id, agent);
+    }
+    return map;
+  }, [agents]);
 
   const runs = liveRuns ?? [];
   const { data: issues } = useQuery({
@@ -65,6 +80,7 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
               key={run.id}
               run={run}
               issue={run.issueId ? issueById.get(run.issueId) : undefined}
+              agent={agentById.get(run.agentId)}
               transcript={transcriptByRun.get(run.id) ?? []}
               hasOutput={hasOutputForRun(run.id)}
               isActive={isRunActive(run)}
@@ -79,12 +95,14 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
 function AgentRunCard({
   run,
   issue,
+  agent,
   transcript,
   hasOutput,
   isActive,
 }: {
   run: LiveRunForIssue;
   issue?: Issue;
+  agent?: Agent;
   transcript: TranscriptEntry[];
   hasOutput: boolean;
   isActive: boolean;
@@ -110,6 +128,11 @@ function AgentRunCard({
               )}
               <Identity name={run.agentName} size="sm" className="[&>span:last-child]:!text-[11px]" />
             </div>
+            {agent?.currentActivity && (
+              <p className="mt-1 truncate text-[11px] text-muted-foreground" title={agent.currentActivity}>
+                {agent.currentActivity}
+              </p>
+            )}
             <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
               <span>{isActive ? "Live now" : run.finishedAt ? `Finished ${relativeTime(run.finishedAt)}` : `Started ${relativeTime(run.createdAt)}`}</span>
             </div>

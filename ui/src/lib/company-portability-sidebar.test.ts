@@ -31,6 +31,7 @@ function makeAgent(id: string, name: string): Agent {
     createdAt: new Date(),
     updatedAt: new Date(),
     urlKey: name.toLowerCase(),
+    currentActivity: null,
   };
 }
 

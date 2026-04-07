@@ -19,7 +19,7 @@ import { ActivityRow } from "../components/ActivityRow";
 import { Identity } from "../components/Identity";
 import { timeAgo } from "../lib/timeAgo";
 import { cn, formatCents } from "../lib/utils";
-import { Bot, CircleDot, DollarSign, ShieldCheck, LayoutDashboard, PauseCircle } from "lucide-react";
+import { Bot, CircleDot, CheckCircle2, DollarSign, ShieldCheck, LayoutDashboard, PauseCircle, Clock } from "lucide-react";
 import { ActiveAgentsPanel } from "../components/ActiveAgentsPanel";
 import { ChartCard, RunActivityChart, PriorityChart, IssueStatusChart, SuccessRateChart } from "../components/ActivityCharts";
 import { PageSkeleton } from "../components/PageSkeleton";
@@ -229,7 +229,30 @@ export function Dashboard() {
             </div>
           ) : null}
 
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-2">
+          <div className="grid grid-cols-2 xl:grid-cols-5 gap-1 sm:gap-2">
+            <MetricCard
+              icon={CircleDot}
+              value={data.tasks.inProgress}
+              label="Tasks In Progress"
+              to="/issues"
+              description={
+                <span>
+                  {data.tasks.open} open{", "}
+                  {data.tasks.blocked} blocked
+                </span>
+              }
+            />
+            <MetricCard
+              icon={CheckCircle2}
+              value={data.tasks.done}
+              label="Tasks Completed"
+              to="/issues"
+              description={
+                <span>
+                  Completed tasks
+                </span>
+              }
+            />
             <MetricCard
               icon={Bot}
               value={data.agents.active + data.agents.running + data.agents.paused + data.agents.error}
@@ -240,18 +263,6 @@ export function Dashboard() {
                   {data.agents.running} running{", "}
                   {data.agents.paused} paused{", "}
                   {data.agents.error} errors
-                </span>
-              }
-            />
-            <MetricCard
-              icon={CircleDot}
-              value={data.tasks.inProgress}
-              label="Tasks In Progress"
-              to="/issues"
-              description={
-                <span>
-                  {data.tasks.open} open{", "}
-                  {data.tasks.blocked} blocked
                 </span>
               }
             />
@@ -305,6 +316,109 @@ export function Dashboard() {
             itemClassName="rounded-lg border bg-card p-4 shadow-sm"
           />
 
+          {/* Task Progress Section */}
+          {(() => {
+            const activeTasks = (issues ?? []).filter(
+              (i) => i.status === "in_progress" || i.status === "in_review" || i.status === "blocked"
+            );
+            return activeTasks.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Task Progress
+                </h3>
+                <div className="border border-border divide-y divide-border overflow-hidden rounded-lg">
+                  {activeTasks.map((issue) => {
+                    const assignee = agentName(issue.assigneeAgentId);
+                    const elapsed = issue.startedAt ?? issue.createdAt;
+                    const progress = issue.progress ?? 0;
+                    return (
+                      <Link
+                        key={issue.id}
+                        to={`/issues/${issue.identifier ?? issue.id}`}
+                        className="block px-4 py-3 hover:bg-accent/50 transition-colors no-underline text-inherit"
+                      >
+                        <div className="flex items-center gap-3">
+                          <StatusIcon status={issue.status} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-mono text-muted-foreground shrink-0">
+                                {issue.identifier ?? issue.id.slice(0, 8)}
+                              </span>
+                              <span className="text-sm truncate">{issue.title}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {/* Progress bar */}
+                              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden max-w-48">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all",
+                                    issue.status === "blocked"
+                                      ? "bg-amber-500"
+                                      : issue.status === "in_review"
+                                        ? "bg-purple-500"
+                                        : "bg-cyan-500"
+                                  )}
+                                  style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                                />
+                              </div>
+                              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+                                {progress}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {assignee && (
+                              <Identity name={assignee} size="sm" />
+                            )}
+                            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {timeAgo(elapsed)}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null;
+          })()}
+
+          {/* Team Status */}
+          {agents && agents.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Team Status
+              </h3>
+              <div className="border border-border divide-y divide-border overflow-hidden rounded-lg">
+                {agents.map((agent) => (
+                  <Link
+                    key={agent.id}
+                    to={`/agents/${agent.id}`}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/50 transition-colors no-underline text-inherit"
+                  >
+                    <span className={cn(
+                      "inline-flex h-2 w-2 rounded-full shrink-0",
+                      agent.status === "running" ? "bg-cyan-500" :
+                      agent.status === "active" ? "bg-green-500" :
+                      agent.status === "paused" ? "bg-amber-500" :
+                      agent.status === "error" ? "bg-red-500" :
+                      "bg-muted-foreground/35"
+                    )} />
+                    <span className="text-sm font-medium shrink-0">{agent.name}</span>
+                    <span className="text-xs text-muted-foreground capitalize shrink-0">{agent.status}</span>
+                    {agent.currentActivity && (
+                      <>
+                        <span className="text-muted-foreground/40">&middot;</span>
+                        <span className="text-xs text-muted-foreground truncate min-w-0">{agent.currentActivity}</span>
+                      </>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             {/* Recent Activity */}
             {recentActivity.length > 0 && (
@@ -345,12 +459,9 @@ export function Dashboard() {
                       className="px-4 py-3 text-sm cursor-pointer hover:bg-accent/50 transition-colors no-underline text-inherit block"
                     >
                       <div className="flex items-start gap-2 sm:items-center sm:gap-3">
-                        {/* Status icon - left column on mobile */}
                         <span className="shrink-0 sm:hidden">
                           <StatusIcon status={issue.status} />
                         </span>
-
-                        {/* Right column on mobile: title + metadata stacked */}
                         <span className="flex min-w-0 flex-1 flex-col gap-1 sm:contents">
                           <span className="line-clamp-2 text-sm sm:order-2 sm:flex-1 sm:min-w-0 sm:line-clamp-none sm:truncate">
                             {issue.title}

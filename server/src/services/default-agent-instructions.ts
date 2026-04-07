@@ -48,6 +48,12 @@ function renderTaskRoleChapter(
     "",
     "See the `task-mode` skill for payload shapes.",
     "",
+    "## Completion callback",
+    "When you mark an issue as done (PATCH /api/issues/:id with {\"status\": \"done\"}),",
+    "the system AUTOMATICALLY wakes your manager to review your work.",
+    "If you do NOT mark the issue done, your manager will never be notified.",
+    "Always: 1) write a completion comment, 2) mark issue done, 3) wait for manager feedback.",
+    "",
   );
 
   return sections.join("\n");
@@ -57,17 +63,22 @@ export async function loadDefaultAgentInstructionsBundle(
   _role: string,
   options: { agentRole?: string; taskDescription?: string } = {},
 ): Promise<Record<string, string>> {
-  const content = await fs.readFile(resolveDefaultAgentBundleUrl("AGENTS.md"), "utf8");
-  const bundle: Record<string, string> = { "AGENTS.md": content };
+  const baseContent = await fs.readFile(resolveDefaultAgentBundleUrl("AGENTS.md"), "utf8");
 
   const agentRole = options.agentRole;
   if (agentRole && isTaskRoleName(agentRole)) {
-    bundle["TASK_ROLE.md"] = renderTaskRoleChapter(agentRole, {
+    // Inline the task role content directly into AGENTS.md so the agent
+    // doesn't need to read a separate file (which would fail because the
+    // agent resolves paths relative to its workspace cwd, not the managed
+    // instructions root).
+    const roleChapter = renderTaskRoleChapter(agentRole, {
       taskDescription: options.taskDescription,
     });
+    const combined = `${baseContent}\n\n${roleChapter}`;
+    return { "AGENTS.md": combined };
   }
 
-  return bundle;
+  return { "AGENTS.md": baseContent };
 }
 
 export function resolveDefaultAgentInstructionsBundleRole(_role: string): string {

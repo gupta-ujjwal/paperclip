@@ -733,6 +733,18 @@ export function IssuesList({
                       <span className="shrink-0 font-mono text-xs text-muted-foreground">
                         {issue.identifier ?? issue.id.slice(0, 8)}
                       </span>
+                      <span className={cn(
+                        "hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium capitalize sm:inline-flex",
+                        issue.status === "done" ? "bg-green-500/10 text-green-600 dark:text-green-400" :
+                        issue.status === "in_progress" ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" :
+                        issue.status === "in_review" ? "bg-violet-500/10 text-violet-600 dark:text-violet-400" :
+                        issue.status === "blocked" ? "bg-red-500/10 text-red-600 dark:text-red-400" :
+                        issue.status === "cancelled" ? "bg-neutral-500/10 text-neutral-500" :
+                        issue.status === "todo" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
+                        "bg-neutral-500/10 text-muted-foreground"
+                      )}>
+                        {issue.status.replace(/_/g, " ")}
+                      </span>
                       {liveIssueIds?.has(issue.id) && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-1.5 py-0.5 sm:gap-1.5 sm:px-2">
                           <span className="relative flex h-2 w-2">

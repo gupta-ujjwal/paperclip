@@ -32,6 +32,7 @@ export const agents = pgTable(
     permissions: jsonb("permissions").$type<Record<string, unknown>>().notNull().default({}),
     gitBranch: text("git_branch"),
     lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
+    currentActivity: text("current_activity"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

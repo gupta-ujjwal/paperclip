@@ -33,6 +33,7 @@ import { budgetService, type BudgetEnforcementScope } from "./budgets.js";
 import { secretService } from "./secrets.js";
 import { resolveDefaultAgentWorkspaceDir, resolveManagedProjectWorkspaceDir } from "../home-paths.js";
 import * as agentWikiSvc from "./agent-wiki.js";
+import * as wikiSynthesizer from "./wiki-synthesizer.js";
 import { buildHeartbeatRunIssueComment, summarizeHeartbeatRunResultJson } from "./heartbeat-run-summary.js";
 import {
   buildWorkspaceReadyComment,
@@ -3028,6 +3029,17 @@ export function heartbeatService(db: Db) {
         message: "run started",
       });
 
+      if (wikiEnabled && paperclipAgentWiki) {
+        const wb = paperclipAgentWiki as { projectSlug?: string | null; wikiPath?: string };
+        await appendRunEvent(currentRun, seq++, {
+          eventType: "wiki.read",
+          stream: "system",
+          level: "info",
+          message: `wiki loaded${wb.projectSlug ? ` (project: ${wb.projectSlug})` : ""}`,
+          payload: { wikiPath: wb.wikiPath ?? null, projectSlug: wb.projectSlug ?? null },
+        });
+      }
+
       handle = await runLogStore.begin({
         companyId: run.companyId,
         agentId: run.agentId,
@@ -3348,13 +3360,38 @@ export function heartbeatService(db: Db) {
           }
         }
         if (outcome === "succeeded" && wikiEnabled) {
-          const wikiUpdates = agentWikiSvc.parseWikiUpdates(adapterResult.resultJson);
-          if (wikiUpdates.length > 0) {
-            try {
-              await agentWikiSvc.applyWikiUpdates(agent.id, wikiUpdates);
-            } catch (err) {
-              logger.warn({ err, runId: run.id }, "wiki update failed (non-fatal)");
+          try {
+            const synthSessionId =
+              readNonEmptyString(adapterResult.sessionId)
+              ?? readNonEmptyString(
+                parseObject(adapterResult.sessionParams).sessionId as string,
+              );
+
+            if (synthSessionId) {
+              const synthResult = await wikiSynthesizer.runWikiSynthesis({
+                adapter,
+                runId: run.id,
+                agent,
+                sessionId: synthSessionId,
+                sessionParams: adapterResult.sessionParams ?? null,
+                sessionDisplayId: adapterResult.sessionDisplayId ?? null,
+                config: runtimeConfig,
+                context,
+                authToken: authToken ?? undefined,
+              });
+
+              await appendRunEvent(finalizedRun, seq++, {
+                eventType: "wiki.update",
+                stream: "system",
+                level: synthResult.completed ? "info" : "warn",
+                message: synthResult.completed
+                  ? "wiki synthesis completed"
+                  : `wiki synthesis skipped: ${synthResult.error}`,
+                payload: { completed: synthResult.completed },
+              });
             }
+          } catch (err) {
+            logger.warn({ err, runId: run.id }, "wiki synthesis failed (non-fatal)");
           }
         }
         await finalizeIssueCommentPolicy(finalizedRun, agent);

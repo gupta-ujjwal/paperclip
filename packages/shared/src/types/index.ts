@@ -174,6 +174,7 @@ export type {
   InstanceUserRoleGrant,
 } from "./access.js";
 export type { QuotaWindow, ProviderQuotaResult } from "./quota.js";
+export type { WikiContextBundle, WikiUpdate, WikiPageInfo } from "./wiki.js";
 export type {
   CompanyPortabilityInclude,
   CompanyPortabilityEnvInput,

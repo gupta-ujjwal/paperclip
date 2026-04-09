@@ -32,6 +32,7 @@ import { companySkillService } from "./company-skills.js";
 import { budgetService, type BudgetEnforcementScope } from "./budgets.js";
 import { secretService } from "./secrets.js";
 import { resolveDefaultAgentWorkspaceDir, resolveManagedProjectWorkspaceDir } from "../home-paths.js";
+import * as agentWikiSvc from "./agent-wiki.js";
 import { buildHeartbeatRunIssueComment, summarizeHeartbeatRunResultJson } from "./heartbeat-run-summary.js";
 import {
   buildWorkspaceReadyComment,
@@ -384,6 +385,13 @@ export function prioritizeProjectWorkspaceCandidatesForRun<T extends ProjectWork
 
 function readNonEmptyString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function normalizeLedgerBillingType(value: unknown): BillingType {
@@ -2683,9 +2691,27 @@ export function heartbeatService(db: Db) {
       secretsSvc,
     });
     const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(agent.companyId);
+    const memoryConfig = parseObject(parseObject(agent.runtimeConfig).memory);
+    const wikiEnabled = asBoolean(memoryConfig.enabled, true);
+    let paperclipAgentWiki: unknown = undefined;
+    if (wikiEnabled) {
+      try {
+        const projectSlug = executionProjectId
+          ? await db
+              .select({ name: projects.name })
+              .from(projects)
+              .where(and(eq(projects.id, executionProjectId), eq(projects.companyId, agent.companyId)))
+              .then((rows) => rows[0]?.name ? slugify(rows[0].name) : null)
+          : null;
+        paperclipAgentWiki = await agentWikiSvc.getWikiForRun(agent.id, projectSlug);
+      } catch (err) {
+        logger.warn({ err, agentId: agent.id }, "wiki pre-run injection failed (non-fatal)");
+      }
+    }
     const runtimeConfig = {
       ...resolvedConfig,
       paperclipRuntimeSkills: runtimeSkillEntries,
+      ...(paperclipAgentWiki ? { paperclipAgentWiki } : {}),
     };
     const workspaceOperationRecorder = workspaceOperationsSvc.createRecorder({
       companyId: agent.companyId,
@@ -3319,6 +3345,16 @@ export function heartbeatService(db: Db) {
               "stderr",
               `[paperclip] Failed to post run summary comment: ${err instanceof Error ? err.message : String(err)}\n`,
             );
+          }
+        }
+        if (outcome === "succeeded" && wikiEnabled) {
+          const wikiUpdates = agentWikiSvc.parseWikiUpdates(adapterResult.resultJson);
+          if (wikiUpdates.length > 0) {
+            try {
+              await agentWikiSvc.applyWikiUpdates(agent.id, wikiUpdates);
+            } catch (err) {
+              logger.warn({ err, runId: run.id }, "wiki update failed (non-fatal)");
+            }
           }
         }
         await finalizeIssueCommentPolicy(finalizedRun, agent);

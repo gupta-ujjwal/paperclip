@@ -60,7 +60,7 @@ curl -sS "$PAPERCLIP_API_URL/llms/agent-icons.txt" \
 - role/title/name
 - icon (required in practice; use one from `/llms/agent-icons.txt`)
 - reporting line (`reportsTo`)
-- adapter type
+- adapter type — default to your own adapter type (from step 1) unless the role specifically requires a different one; consult step 2–3 for available adapters
 - optional `desiredSkills` from the company skill library when this role needs installed skills on day one
 - adapter and runtime config aligned to this environment
 - capabilities
@@ -81,8 +81,8 @@ curl -sS -X POST "$PAPERCLIP_API_URL/api/companies/$PAPERCLIP_COMPANY_ID/agent-h
     "reportsTo": "<ceo-agent-id>",
     "capabilities": "Owns technical roadmap, architecture, staffing, execution",
     "desiredSkills": ["vercel-labs/agent-browser/agent-browser"],
-    "adapterType": "codex_local",
-    "adapterConfig": {"cwd": "/abs/path/to/repo", "model": "o4-mini"},
+    "adapterType": "<your-adapter-type>",
+    "adapterConfig": {"cwd": "/abs/path/to/repo", "model": "<model>"},
     "runtimeConfig": {"heartbeat": {"enabled": true, "intervalSec": 300, "wakeOnDemand": true}},
     "sourceIssueId": "<issue-id>"
   }'

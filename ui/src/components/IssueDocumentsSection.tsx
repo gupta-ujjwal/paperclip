@@ -15,6 +15,7 @@ import { useAutosaveIndicator } from "../hooks/useAutosaveIndicator";
 import { deriveDocumentRevisionState } from "../lib/document-revisions";
 import { queryKeys } from "../lib/queryKeys";
 import { cn, relativeTime } from "../lib/utils";
+import { HtmlViewer } from "./HtmlViewer";
 import { MarkdownBody } from "./MarkdownBody";
 import { MarkdownEditor, type MentionOption } from "./MarkdownEditor";
 import { OutputFeedbackButtons } from "./OutputFeedbackButtons";
@@ -37,6 +38,7 @@ type DraftState = {
   key: string;
   title: string;
   body: string;
+  format: "markdown" | "html";
   baseRevisionId: string | null;
   isNew: boolean;
 };
@@ -69,7 +71,10 @@ function saveFoldedDocumentKeys(issueId: string, keys: string[]) {
   window.localStorage.setItem(getFoldedDocumentsStorageKey(issueId), JSON.stringify(keys));
 }
 
-function renderBody(body: string, className?: string) {
+function renderBody(body: string, format: string, className?: string) {
+  if (format === "html") {
+    return <HtmlViewer html={body} className={className} />;
+  }
   return <MarkdownBody className={className} softBreaks={false}>{body}</MarkdownBody>;
 }
 
@@ -237,7 +242,7 @@ export function IssueDocumentsSection({
     mutationFn: async (nextDraft: DraftState) =>
       issuesApi.upsertDocument(issue.id, nextDraft.key, {
         title: isPlanKey(nextDraft.key) ? null : nextDraft.title.trim() || null,
-        format: "markdown",
+        format: nextDraft.format,
         body: nextDraft.body,
         baseRevisionId: nextDraft.baseRevisionId,
       }),
@@ -313,6 +318,7 @@ export function IssueDocumentsSection({
       key: "",
       title: "",
       body: "",
+      format: "markdown",
       baseRevisionId: null,
       isNew: true,
     });
@@ -330,6 +336,7 @@ export function IssueDocumentsSection({
       key: conflictedDraft?.key ?? doc.key,
       title: conflictedDraft?.title ?? doc.title ?? "",
       body: conflictedDraft?.body ?? doc.body,
+      format: (conflictedDraft?.format as "markdown" | "html") ?? (doc.format as "markdown" | "html") ?? "markdown",
       baseRevisionId: conflictedDraft?.baseRevisionId ?? doc.latestRevisionId,
       isNew: false,
     });
@@ -418,6 +425,7 @@ export function IssueDocumentsSection({
           key: saved.key,
           title: saved.title ?? "",
           body: saved.body,
+          format: saved.format as "markdown" | "html",
           baseRevisionId: saved.latestRevisionId,
           isNew: false,
         };
@@ -445,6 +453,7 @@ export function IssueDocumentsSection({
               key: normalizedKey,
               title: isPlanKey(normalizedKey) ? "" : normalizedTitle,
               body: currentDraft.body,
+              format: currentDraft.format,
               baseRevisionId: currentDraft.baseRevisionId,
               isNew: false,
             },
@@ -471,6 +480,7 @@ export function IssueDocumentsSection({
       key: serverDocument.key,
       title: serverDocument.title ?? "",
       body: serverDocument.body,
+      format: serverDocument.format as "markdown" | "html",
       baseRevisionId: serverDocument.latestRevisionId,
       isNew: false,
     });
@@ -734,6 +744,18 @@ export function IssueDocumentsSection({
               placeholder="Optional title"
             />
           )}
+          <div className="flex items-center gap-2">
+            <select
+              value={draft.format}
+              onChange={(event) =>
+                setDraft((current) => current ? { ...current, format: event.target.value as "markdown" | "html" } : current)
+              }
+              className="h-8 px-2 text-xs rounded border border-border bg-background"
+            >
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML</option>
+            </select>
+          </div>
           <MarkdownEditor
             value={draft.body}
             onChange={(body) =>
@@ -778,7 +800,7 @@ export function IssueDocumentsSection({
             </span>
           </div>
           <div className={documentBodyPaddingClassName}>
-            {renderBody(issue.legacyPlanDocument.body, documentBodyContentClassName)}
+            {renderBody(issue.legacyPlanDocument.body, "markdown", documentBodyContentClassName)}
           </div>
         </div>
       ) : null}
@@ -1065,7 +1087,7 @@ export function IssueDocumentsSection({
                           {!isPlanKey(doc.key) && activeConflict.serverDocument.title ? (
                             <p className="mb-2 text-sm font-medium">{activeConflict.serverDocument.title}</p>
                           ) : null}
-                          {renderBody(activeConflict.serverDocument.body, "text-[14px] leading-7")}
+                          {renderBody(activeConflict.serverDocument.body, activeConflict.serverDocument.format, "text-[14px] leading-7")}
                         </div>
                       )}
                     </div>
@@ -1080,6 +1102,24 @@ export function IssueDocumentsSection({
                       placeholder="Optional title"
                     />
                   )}
+                  {activeDraft && !isHistoricalPreview && (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={activeDraft.format}
+                        onChange={(event) => {
+                          markDocumentDirty(doc.key);
+                          setDraft((current) => current ? { ...current, format: event.target.value as "markdown" | "html" } : current);
+                        }}
+                        className="h-7 px-2 text-xs rounded border border-border bg-background"
+                      >
+                        <option value="markdown">Markdown</option>
+                        <option value="html">HTML</option>
+                      </select>
+                      <span className="text-xs text-muted-foreground">
+                        {activeDraft.format === "html" ? "HTML document" : "Markdown document"}
+                      </span>
+                    </div>
+                  )}
                   <div
                     className={`${documentBodyShellClassName} ${documentBodyPaddingClassName} ${
                       activeDraft || isHistoricalPreview ? "" : "hover:bg-accent/10"
@@ -1087,7 +1127,7 @@ export function IssueDocumentsSection({
                   >
                     {isHistoricalPreview ? (
                       <div className="rounded-md border border-amber-500/20 bg-background/50 p-3">
-                        {renderBody(displayedBody, documentBodyContentClassName)}
+                        {renderBody(displayedBody, doc.format, documentBodyContentClassName)}
                       </div>
                     ) : activeDraft ? (
                       <MarkdownEditor
@@ -1111,7 +1151,7 @@ export function IssueDocumentsSection({
                       />
                     ) : (
                       <div className="rounded-md border border-border/60 bg-background/40 p-3">
-                        {renderBody(displayedBody, documentBodyContentClassName)}
+                        {renderBody(displayedBody, doc.format, documentBodyContentClassName)}
                       </div>
                     )}
                   </div>

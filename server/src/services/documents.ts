@@ -3,6 +3,7 @@ import type { Db } from "@paperclipai/db";
 import { documentRevisions, documents, issueDocuments, issues } from "@paperclipai/db";
 import { issueDocumentKeySchema } from "@paperclipai/shared";
 import { conflict, notFound, unprocessable } from "../errors.js";
+import { sanitizeHtml } from "./html-sanitizer.js";
 
 function normalizeDocumentKey(key: string) {
   const normalized = key.trim().toLowerCase();
@@ -171,6 +172,7 @@ export function documentService(db: Db) {
       baseRevisionId?: string | null;
       createdByAgentId?: string | null;
       createdByUserId?: string | null;
+      createdByRunId?: string | null;
     }) => {
       const key = normalizeDocumentKey(input.key);
       const issue = await db
@@ -179,6 +181,20 @@ export function documentService(db: Db) {
         .where(eq(issues.id, input.issueId))
         .then((rows) => rows[0] ?? null);
       if (!issue) throw notFound("Issue not found");
+
+      const VALID_FORMATS = ["markdown", "html"];
+      if (!VALID_FORMATS.includes(input.format)) {
+        throw unprocessable(`Invalid document format: ${input.format}. Must be one of: ${VALID_FORMATS.join(", ")}`);
+      }
+
+      let body = input.body;
+      if (input.format === "html") {
+        const { sanitized, warnings } = sanitizeHtml(body);
+        body = sanitized;
+        if (warnings.length > 0) {
+          console.warn(`[html-sanitizer] Document ${key} for issue ${input.issueId}: ${warnings.join("; ")}`);
+        }
+      }
 
       try {
         return await db.transaction(async (tx) => {
@@ -227,10 +243,11 @@ export function documentService(db: Db) {
                 revisionNumber: nextRevisionNumber,
                 title: input.title ?? null,
                 format: input.format,
-                body: input.body,
+                body: body,
                 changeSummary: input.changeSummary ?? null,
                 createdByAgentId: input.createdByAgentId ?? null,
                 createdByUserId: input.createdByUserId ?? null,
+                createdByRunId: input.createdByRunId ?? null,
                 createdAt: now,
               })
               .returning();
@@ -240,7 +257,7 @@ export function documentService(db: Db) {
               .set({
                 title: input.title ?? null,
                 format: input.format,
-                latestBody: input.body,
+                latestBody: body,
                 latestRevisionId: revision.id,
                 latestRevisionNumber: nextRevisionNumber,
                 updatedByAgentId: input.createdByAgentId ?? null,
@@ -260,7 +277,7 @@ export function documentService(db: Db) {
                 ...existing,
                 title: input.title ?? null,
                 format: input.format,
-                body: input.body,
+                body: body,
                 latestRevisionId: revision.id,
                 latestRevisionNumber: nextRevisionNumber,
                 updatedByAgentId: input.createdByAgentId ?? null,
@@ -280,7 +297,7 @@ export function documentService(db: Db) {
               companyId: issue.companyId,
               title: input.title ?? null,
               format: input.format,
-              latestBody: input.body,
+              latestBody: body,
               latestRevisionId: null,
               latestRevisionNumber: 1,
               createdByAgentId: input.createdByAgentId ?? null,
@@ -300,10 +317,11 @@ export function documentService(db: Db) {
               revisionNumber: 1,
               title: input.title ?? null,
               format: input.format,
-              body: input.body,
+              body: body,
               changeSummary: input.changeSummary ?? null,
               createdByAgentId: input.createdByAgentId ?? null,
               createdByUserId: input.createdByUserId ?? null,
+              createdByRunId: input.createdByRunId ?? null,
               createdAt: now,
             })
             .returning();

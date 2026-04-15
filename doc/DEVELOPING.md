@@ -55,10 +55,23 @@ pnpm dev:stop
 Tailscale/private-auth dev mode:
 
 ```sh
-pnpm dev --tailscale-auth
+pnpm dev --bind lan
 ```
 
-This runs dev as `authenticated/private` and binds the server to `0.0.0.0` for private-network access.
+This runs dev as `authenticated/private` with a private-network bind preset.
+
+For Tailscale-only reachability on a detected tailnet address:
+
+```sh
+pnpm dev --bind tailnet
+```
+
+Legacy aliases still map to the old broad private-network behavior:
+
+```sh
+pnpm dev --tailscale-auth
+pnpm dev --authenticated-private
+```
 
 Allow additional private hostnames (for example custom Tailscale hostnames):
 
@@ -97,7 +110,7 @@ docker run --name paperclip \
 Or use Compose:
 
 ```sh
-docker compose -f docker-compose.quickstart.yml up --build
+docker compose -f docker/docker-compose.quickstart.yml up --build
 ```
 
 See `doc/DOCKER.md` for API key wiring (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY`) and persistence details.
@@ -175,6 +188,10 @@ Seed modes:
 
 After `worktree init`, both the server and the CLI auto-load the repo-local `.paperclip/.env` when run inside that worktree, so normal commands like `pnpm dev`, `paperclipai doctor`, and `paperclipai db:backup` stay scoped to the worktree instance.
 
+`pnpm dev` now fails fast in a linked git worktree when `.paperclip/.env` is missing, instead of silently booting against the default instance/port. If that happens, run `paperclipai worktree init` in the worktree first.
+
+Provisioned git worktrees also pause seeded routines that still have enabled schedule triggers in the isolated worktree database by default. This prevents copied daily/cron routines from firing unexpectedly inside the new workspace instance during development without disabling webhook/API-only routines.
+
 That repo-local env also sets:
 
 - `PAPERCLIP_IN_WORKTREE=true`
@@ -229,6 +246,39 @@ pnpm paperclipai worktree init --force --seed-mode minimal \
 ```
 
 That rewrites the worktree-local `.paperclip/config.json` + `.paperclip/.env`, recreates the isolated instance under `~/.paperclip-worktrees/instances/<worktree-id>/`, and preserves the git worktree contents themselves.
+
+For an already-created worktree where you want to keep the existing repo-local config/env and only overwrite the isolated database, use `worktree reseed` instead. Stop the target worktree's Paperclip server first so the command can replace the DB safely.
+
+**`pnpm paperclipai worktree reseed [options]`** — Re-seed an existing worktree-local instance from another Paperclip instance or worktree while preserving the target worktree's current config, ports, and instance identity.
+
+| Option | Description |
+|---|---|
+| `--from <worktree>` | Source worktree path, directory name, branch name, or `current` |
+| `--to <worktree>` | Target worktree path, directory name, branch name, or `current` (defaults to `current`) |
+| `--from-config <path>` | Source config.json to seed from |
+| `--from-data-dir <path>` | Source `PAPERCLIP_HOME` used when deriving the source config |
+| `--from-instance <id>` | Source instance id when deriving the source config |
+| `--seed-mode <mode>` | Seed profile: `minimal` or `full` (default: `full`) |
+| `--yes` | Skip the destructive confirmation prompt |
+| `--allow-live-target` | Override the guard that requires the target worktree DB to be stopped first |
+
+Examples:
+
+```sh
+# From the main repo, reseed a worktree from the current default/master instance.
+cd /path/to/paperclip
+pnpm paperclipai worktree reseed \
+  --from current \
+  --to PAP-1132-assistant-ui-pap-1131-make-issues-comments-be-like-a-chat \
+  --seed-mode full \
+  --yes
+
+# From inside a worktree, reseed it from the default instance config.
+cd /path/to/paperclip/.paperclip/worktrees/PAP-1132-assistant-ui-pap-1131-make-issues-comments-be-like-a-chat
+pnpm paperclipai worktree reseed \
+  --from-instance default \
+  --seed-mode full
+```
 
 **`pnpm paperclipai worktree:make <name> [options]`** — Create `~/NAME` as a git worktree, then initialize an isolated Paperclip instance inside it. This combines `git worktree add` with `worktree init` in a single step.
 
@@ -396,6 +446,89 @@ pnpm paperclipai dashboard get
 ```
 
 See full command reference in `doc/CLI.md`.
+
+## Testing
+
+Paperclip uses multiple testing layers:
+
+### Unit Tests (Vitest)
+
+Run unit tests across all packages:
+
+```sh
+pnpm test        # watch mode
+pnpm test:run    # single run
+```
+
+Vitest configuration is in the root `vitest.config.ts` with project-specific configs in each package (e.g., `ui/vitest.config.ts`, `server/vitest.config.ts`).
+
+Test file patterns:
+- `*.test.ts` — unit tests
+- `*.test.tsx` — React component tests
+
+### End-to-End Tests (Playwright)
+
+Run E2E tests:
+
+```sh
+pnpm test:e2e           # headless
+pnpm test:e2e:headed    # with browser UI
+```
+
+E2E tests are in `tests/e2e/` and use Playwright with config at `tests/e2e/playwright.config.ts`.
+
+### Release Smoke Tests
+
+```sh
+pnpm test:release-smoke
+pnpm test:release-smoke:headed
+```
+
+Located in `tests/release-smoke/`.
+
+### Agent Evals (Promptfoo)
+
+Agent behavior testing using promptfoo:
+
+```sh
+pnpm evals:smoke
+```
+
+Evals are in `evals/promptfoo/` and test agent heartbeat behaviors like assignment pickup, progress updates, blocked state reporting, and governance compliance.
+
+### Test Coverage by Component
+
+| Component | Test Framework | Location |
+|-----------|---------------|----------|
+| UI | Vitest | `ui/src/**/*.test.{ts,tsx}` |
+| Server | Vitest | `server/src/__tests__/*.test.ts` |
+| CLI | Vitest | `cli/src/__tests__/*.test.ts` |
+| Adapters | Vitest | `packages/adapters/*/src/**/*.test.ts` |
+| E2E | Playwright | `tests/e2e/*.spec.ts` |
+| Evals | Promptfoo | `evals/promptfoo/cases/*.yaml` |
+
+### Quality Gates (CI)
+
+All tests must pass before a PR can be merged. PR CI runs:
+
+```sh
+pnpm typecheck              # TypeScript type checking
+pnpm test:run              # All unit tests
+pnpm build                 # Build all packages
+pnpm test:e2e              # E2E tests (if changed)
+```
+
+See `.github/workflows/pr.yml` for the full CI pipeline.
+
+### Quality Metrics
+
+| Metric | Tool | Threshold |
+|--------|------|-----------|
+| Type safety | TypeScript | 0 errors |
+| Unit tests | Vitest | All pass |
+| E2E tests | Playwright | All pass |
+| Agent behavior | Promptfoo evals | All assertions pass |
+| Linting | ESLint (if configured) | 0 errors |
 
 ## OpenClaw Invite Onboarding Endpoints
 

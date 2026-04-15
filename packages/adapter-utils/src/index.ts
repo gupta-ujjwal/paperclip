@@ -22,6 +22,9 @@ export type {
   AdapterModel,
   HireApprovedPayload,
   HireApprovedHookResult,
+  ConfigFieldOption,
+  ConfigFieldSchema,
+  AdapterConfigSchema,
   ServerAdapterModule,
   QuotaWindow,
   ProviderQuotaResult,
@@ -51,3 +54,4 @@ export {
   redactTranscriptEntryPaths,
 } from "./log-redaction.js";
 export { inferOpenAiCompatibleBiller } from "./billing.js";
+export { formatWikiForPrompt, type WikiContextBundle } from "./wiki-prompt.js";
